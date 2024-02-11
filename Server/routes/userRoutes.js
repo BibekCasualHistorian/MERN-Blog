@@ -1,5 +1,5 @@
 const express = require("express");
-const { register, login } = require("../controllers/userController");
+const { register, login, google } = require("../controllers/userController");
 
 const Router = express.Router();
 
@@ -7,9 +7,7 @@ Router.post("/register", register);
 
 Router.post("/login", login);
 
-// Router.post("/social-register", socialRegister);
-
-// Router.post("/social-login", socialLogin);
+Router.post("/google", google);
 
 // Router.patch("/update-password/:id", updatePassword);
 

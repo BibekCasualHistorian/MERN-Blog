@@ -25,7 +25,7 @@ app.use(cookieParser({}));
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: ["http://localhost:5173", "http://localhost:5174"],
     credentials: true,
   })
 );
@@ -39,7 +39,7 @@ app.use((err, req, res, next) => {
   const message = err.message || "Server problem";
   res
     .status(status)
-    .json({ success: false, statusCode: status, error: message });
+    .json({ success: false, statusCode: status, message: message });
 });
 
 // Connecting to Database
