@@ -3,9 +3,6 @@ require("dotenv").config({ path: "../.env" });
 // Importing DB connect
 const connectDB = require("./db/dbConnect");
 
-// Importing Routes
-const userRoutes = require("./routes/userRoutes");
-
 // Express App
 const express = require("express");
 const app = express();
@@ -23,12 +20,17 @@ const cookieParser = require("cookie-parser");
 // middleware
 app.use(cookieParser({}));
 app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
+
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: ["http://localhost:5173", "http://localhost:5174"],
     credentials: true,
   })
 );
+
+// Importing Routes
+const userRoutes = require("./routes/userRoutes");
 
 // App Routes
 app.use("/api/user", userRoutes);
@@ -39,7 +41,7 @@ app.use((err, req, res, next) => {
   const message = err.message || "Server problem";
   res
     .status(status)
-    .json({ success: false, statusCode: status, error: message });
+    .json({ success: false, statusCode: status, message: message });
 });
 
 // Connecting to Database

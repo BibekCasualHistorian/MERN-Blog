@@ -1,5 +1,12 @@
 const UserModel = require("../models/userModel");
 const createJsonWebToken = require("../utils/createJsonWebToken");
+const bcrypt = require("bcryptjs");
+
+const path = require("path");
+const fs = require("fs");
+
+const validator = require("validator");
+const { generateRandomPassword } = require("../utils/generateRandomPassword");
 
 const register = async (req, res, next) => {
   const { username, email, password } = req.body;
@@ -54,4 +61,218 @@ const login = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login };
+const google = async (req, res, next) => {
+  const expiryDate = new Date(Date.now() + 360000);
+  try {
+    // Assuming you send the data from the frontend in the request body
+    const { displayName, email, photoURL } = req.body;
+
+    const userAlreadyExist = await UserModel.findOne({ email });
+
+    if (userAlreadyExist) {
+      const token = createJsonWebToken(userAlreadyExist._id);
+      // User already exists, return the user data directly
+      res
+        .status(200)
+        .cookie("token", token, {
+          // httpOnly: true, // client won't be accesss the sent cookie
+          // when does it expires, it denotes that, alternate property is maxAge
+          secure: false,
+          expires:
+            expiryDate /* there are other too like signed, secure, overwrite etc*/,
+        })
+        .json({
+          success: true,
+          data: userAlreadyExist, // Include user data directly
+        });
+    } else {
+      // User doesn't exist, create a new user
+
+      // Generate a random password
+      const password = generateRandomPassword();
+
+      // Hash the password using bcrypt
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create a new user in the UserModel with 'username' instead of 'displayName'
+      const newUser = new UserModel({
+        username: displayName, // Assuming you want to use 'displayName' as 'username'
+        email,
+        photo: photoURL,
+        password: hashedPassword, // Change to 'password' to match your UserModel schema
+      });
+
+      await newUser.save();
+
+      const token = createJsonWebToken(newUser._id);
+
+      res
+        .status(201)
+        .cookie("token", token, {
+          // httpOnly: true, // client won't be accesss the sent cookie
+          // when does it expires, it denotes that, alternate property is maxAge
+          secure: false,
+          expires:
+            expiryDate /* there are other too like signed, secure, overwrite etc*/,
+        })
+        .json({
+          success: true,
+          data: newUser,
+        });
+    }
+  } catch (error) {
+    console.error("Error processing user:", error);
+    next(error);
+  }
+};
+
+const updateProfile = async (req, res, next) => {
+  const { username, email, password } = req.body;
+  try {
+    const userId = req.params.id; // Extract userId from route parameters
+
+    const photo = req.file;
+    console.log(userId, username, email, password, photo);
+    const errors = [];
+
+    // Validate email using validator if provided
+    if (email && !validator.isEmail(email)) {
+      errors.push("Invalid email address");
+    }
+
+    // Validate minimum length for password and username
+    if (password && password.length < 8) {
+      errors.push("Password must be at least 8 characters long");
+    }
+
+    if (username && username.length < 3) {
+      errors.push("Username must be at least 3 characters long");
+    }
+
+    // Check if the username is unique
+    if (username) {
+      const isUsernameTaken = await UserModel.findOne({
+        username,
+        _id: { $ne: userId },
+      });
+      if (isUsernameTaken) {
+        errors.push("Username is already taken");
+      }
+    }
+
+    // Return accumulated errors with custom status code and message if any
+    if (errors.length > 0) {
+      console.error(errors);
+      const error = new Error("Validation failed");
+      error.statusCode = 400;
+      error.errors = errors;
+      throw error;
+    }
+
+    // Update user data
+    const updatedUserData = {};
+    if (username) updatedUserData.username = username;
+    if (email) updatedUserData.email = email;
+
+    // Hash the new password if provided
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updatedUserData.password = hashedPassword;
+    }
+
+    // Handle profile image upload
+    if (photo) {
+      // Process and store the profile image as needed
+      // For simplicity, let's assume you store it in a 'uploads' directory
+      const uploadedImagePath = path.join(
+        __dirname,
+        "..",
+        "..",
+        "uploads",
+        "users",
+        userId + ".jpg"
+      );
+
+      // fs.writeFileSync(uploadedImagePath, photo, "utf-8");
+      // You may want to use a unique filename
+      // Save the image path to the user data
+      updatedUserData.photo = uploadedImagePath;
+    }
+
+    // Update the user in the database
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      userId,
+      updatedUserData,
+      { new: true }
+    );
+
+    console.log("updated", updatedUser);
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    next(error);
+  }
+};
+
+const logout = async (req, res, next) => {
+  try {
+    const userId = req.params.id; // Extract userId from route parameters
+
+    // Clear the user's authentication token or session (example using JWT)
+    // You may need to implement your specific authentication logic here
+    // For illustration purposes, assuming you have a token stored in the user document
+
+    const user = await UserModel.findById(userId);
+
+    if (!user) {
+      const error = new Error("User not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    // Clear the token field (assuming a field called 'token' in the user document)
+    // user.token = null;
+
+    // Save the updated user document
+    // await user.save();
+
+    res
+      .status(200)
+      .json({ success: true, message: "User logged out successfully" });
+  } catch (error) {
+    console.error("Error logging out user:", error);
+    next(error);
+  }
+};
+
+const deleteUser = async (req, res, next) => {
+  try {
+    const userId = req.params.id; // Extract userId from route parameters
+
+    console.log(userId);
+    // Check if the user exists
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      const error = new Error("User not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    // If the user exists, delete it
+    await UserModel.findByIdAndDelete(userId);
+
+    res
+      .status(200)
+      .json({ success: true, message: "User deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    next(error);
+  }
+};
+
+module.exports = { register, login, google, updateProfile, deleteUser, logout };
