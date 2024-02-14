@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { FaGoogle } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -45,8 +44,7 @@ const Register = () => {
       console.log("data", data);
       if (response.ok) {
         dispatch(loginSuccess(data));
-        console.log("real");
-        localStorage.add("user", JSON.stringify(data));
+        localStorage.setItem("user", JSON.stringify(data));
         navigate("/");
       } else {
         throw Error(data.message);

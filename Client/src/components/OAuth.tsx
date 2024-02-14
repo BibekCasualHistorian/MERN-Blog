@@ -24,9 +24,11 @@ const OAuth = () => {
           body: JSON.stringify({ displayName, email, photoURL }),
         });
         const data = await response.json();
+        console.log(response);
+        console.log(data);
         if (response.ok) {
           dispatch(loginSuccess(data.data));
-          localStorage.add("user", JSON.stringify(data.data));
+          localStorage.setItem("user", JSON.stringify(data.data));
           console.log("data", data);
           navigate("/");
         } else {

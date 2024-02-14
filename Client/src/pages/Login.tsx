@@ -45,6 +45,7 @@ const Login = () => {
       console.log("response", response);
       console.log("data", data);
       if (response.ok) {
+        localStorage.setItem("user", JSON.stringify(data.data));
         dispatch(loginSuccess(data));
         console.log("login");
         navigate("/");
