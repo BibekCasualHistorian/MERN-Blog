@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { FaMoon, FaSearch, FaSun } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { toggleDarkMode } from "../store/slices/themeSlice";
 import { loginSuccess, logout } from "../store/slices/userSlice";
 
@@ -15,11 +15,16 @@ const Header = () => {
   const { isAuthenticated, data } = useSelector((state: any) => state.user);
   const { theme } = useSelector((state: any) => state.theme);
 
+  const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const [dropDown, setDropDown] = useState(false);
   const [profile, setProfile] = useState(false);
+  const [search, setSearch] = useState("");
   const location = useLocation();
+
+  console.log("dropDown", dropDown);
+  console.log("profile", profile);
 
   // console.log(isAuthenticated, data);
 
@@ -34,6 +39,12 @@ const Header = () => {
   const handleLogout = async () => {
     localStorage.removeItem("user");
     dispatch(logout());
+  };
+
+  const handleSearch = async () => {
+    setDropDown(false);
+    setProfile(false);
+    navigate(`/search?searchTerm=${search}&sortDirection=asc`);
   };
 
   return (
@@ -52,21 +63,22 @@ const Header = () => {
           type="text"
           name=""
           id=""
+          onChange={(e) => setSearch(e.target.value)}
           className="border-none hover:outline-none outline-none px-2 bg-inherit text-gray-600"
           placeholder="Search..."
         />
-        <FaSearch className="inline text-gray-500" />
+        <FaSearch className="inline text-gray-500" onClick={handleSearch} />
       </form>
       <div className=" hidden sm:flex gap-4">
         {navigationLocation.map((each) => {
           return (
-            <NavLink
+            <Link
               key={each.pathName}
               to={each.pathName}
               className={each.pathName == location.pathname ? "font-bold" : ""}
             >
               {each.title}
-            </NavLink>
+            </Link>
           );
         })}
       </div>
@@ -79,12 +91,12 @@ const Header = () => {
         </div>
         {!isAuthenticated && (
           <div className="ml-auto">
-            <NavLink
+            <Link
               to={"/login"}
               className="border-gray-300 border p-2 px-3 rounded-xl font-bold hover:bg-pink-500 group-hover:text-white"
             >
               Login
-            </NavLink>
+            </Link>
           </div>
         )}
         {isAuthenticated && (
@@ -104,12 +116,13 @@ const Header = () => {
                   <h2>{data.username}</h2>
                   <h3 className="text-gray-500">{data.email}</h3>
                 </div>
-                <NavLink
+                <Link
                   to={"/dashboard"}
+                  onClick={() => setProfile(false)}
                   className="p-2 px-3 rounded-xl font-bold"
                 >
                   Profile
-                </NavLink>
+                </Link>
                 <p
                   onClick={handleLogout}
                   className="p-2 px-3 rounded-xl font-bold cursor-pointer"
@@ -136,7 +149,8 @@ const Header = () => {
         >
           {navigationLocation.map((each) => {
             return (
-              <NavLink
+              <Link
+                onClick={() => setProfile(false)}
                 key={each.pathName}
                 to={each.pathName}
                 className={`p-2 ${
@@ -146,7 +160,7 @@ const Header = () => {
                 }`}
               >
                 {each.title}
-              </NavLink>
+              </Link>
             );
           })}
         </div>

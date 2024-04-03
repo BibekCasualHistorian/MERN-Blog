@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { loginSuccess, logout } from "../store/slices/userSlice";
+import { NavLink, useNavigate } from "react-router-dom";
+import { loginSuccess, logout } from "../../store/slices/userSlice";
 
 const DashboardProfile = () => {
   const navigate = useNavigate();
@@ -180,68 +180,79 @@ const DashboardProfile = () => {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className=" relative flex flex-col gap-5 py-2 items-center max-w-[500px] mx-auto "
-    >
-      <h1 className="font-semibold text-4xl">Profile</h1>
-      <img
-        src={photo || data.photo}
-        alt=""
-        className="rounded-full border-red-500 border-8 w-[140px] object-contain h-[140px]"
-        onClick={handleImageClick}
-      />
-
-      <input
-        id="fileInput"
-        type="file"
-        accept="image/*"
-        style={{ display: "none" }}
-        onChange={handleFileChange}
-        onError={handleImageError}
-      />
-
-      <input
-        type="text"
-        value={username}
-        onChange={(e) => handleInputChange(e, "username")}
-        className="p-2 text-gray-700 w-full font-semibold min-w-[60%] hover:outline-none outline-none border border-gray-700 rounded-lg"
-      />
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => handleInputChange(e, "email")}
-        className="p-2 text-gray-700 w-full font-semibold min-w-[60%] hover:outline-none outline-none border border-gray-700 rounded-lg"
-      />
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => handleInputChange(e, "password")}
-        placeholder="**********"
-        className="bg-gray-100 w-full text-black p-2 font-semibold  min-w-[60%] hover:outline-none outline-none border border-gray-700 rounded-lg"
-      />
-      <button
-        className=" bg-gray-100 text-black w-full p-2 font-bold rounded-[8px] transition-colors hover:bg-black hover:text-white border border-gray-400"
-        style={{ transition: "all 0.2s" }}
+    <div className="col-span-4 p-2 ">
+      <form
+        onSubmit={handleSubmit}
+        className=" relative flex flex-col gap-5 py-2 items-center max-w-[500px] mx-auto "
       >
-        Update
-      </button>
+        <h1 className="font-semibold text-4xl">Profile</h1>
+        <img
+          src={photo || data.photo}
+          alt=""
+          className="rounded-full border-red-500 border-8 w-[140px] object-contain h-[140px]"
+          onClick={handleImageClick}
+        />
 
-      {error && (
-        <div className="text-red-700 border ">
-          <p>{error}</p>
+        <input
+          id="fileInput"
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={handleFileChange}
+          onError={handleImageError}
+        />
+
+        <input
+          type="text"
+          value={username}
+          onChange={(e) => handleInputChange(e, "username")}
+          className="p-2 text-gray-700 w-full font-semibold min-w-[60%] hover:outline-none outline-none border border-gray-700 rounded-lg"
+        />
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => handleInputChange(e, "email")}
+          className="p-2 text-gray-700 w-full font-semibold min-w-[60%] hover:outline-none outline-none border border-gray-700 rounded-lg"
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => handleInputChange(e, "password")}
+          placeholder="**********"
+          className="bg-gray-100 w-full text-black p-2 font-semibold  min-w-[60%] hover:outline-none outline-none border border-gray-700 rounded-lg"
+        />
+        <button
+          className=" bg-gray-100 text-black w-full p-2 font-bold rounded-[8px] transition-colors hover:bg-black hover:text-white border border-gray-400"
+          style={{ transition: "all 0.2s" }}
+        >
+          Update
+        </button>
+
+        {error && (
+          <div className="text-red-700 border ">
+            <p>{error}</p>
+          </div>
+        )}
+
+        {data.isAdmin && (
+          <NavLink
+            to="/create-post"
+            className=" bg-gray-100 text-center text-black w-full p-2 font-bold rounded-[8px] transition-colors hover:bg-black hover:text-white border border-gray-400"
+          >
+            Create Post
+          </NavLink>
+        )}
+
+        <div className="  text-red-700 flex w-full justify-between  font-semibold">
+          <p className="cursor-pointer" onClick={handleDelete}>
+            Delete Account
+          </p>
+          <p className="cursor-pointer" onClick={handleLogout}>
+            Sign Out
+          </p>
         </div>
-      )}
-
-      <div className="  text-red-700 flex w-full justify-between  font-semibold">
-        <p className="cursor-pointer" onClick={handleDelete}>
-          Delete Account
-        </p>
-        <p className="cursor-pointer" onClick={handleLogout}>
-          Sign Out
-        </p>
-      </div>
-    </form>
+      </form>
+    </div>
   );
 };
 

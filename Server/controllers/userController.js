@@ -7,6 +7,43 @@ const fs = require("fs");
 
 const validator = require("validator");
 const { generateRandomPassword } = require("../utils/generateRandomPassword");
+const PostModel = require("../models/postModel");
+
+const getUsers = async (req, res, next) => {
+  console.log("user req query", req.query);
+  try {
+    const startIndex = parseInt(req.query.startIndex) || 0;
+    const limit = req.query.limit || 10;
+    const sortDirection = req.query.sortDirection === "asc" ? 1 : -1;
+    const queryParameters = {};
+    const allUsers = await UserModel.find(queryParameters)
+      .sort({ createdAt: sortDirection })
+      .skip(startIndex)
+      .limit(limit);
+    console.log(allUsers);
+    const users = allUsers.map((user) => {
+      const imageFile = fs.readFileSync(user._doc.photo, "utf8");
+      const imageBase64 = Buffer.from(imageFile).toString("base64");
+      return { ...user._doc, imageBase64 };
+    });
+    const totalUsers = await PostModel.countDocuments();
+    const now = new Date();
+    const oneMonthsAgo = new Date(
+      now.getFullYear(),
+      now.getMonth() - 1,
+      now.getDate()
+    );
+    const lastMonthsUsers = await PostModel.countDocuments({
+      createdAt: { $gte: oneMonthsAgo },
+    });
+    return res
+      .status(200)
+      .json({ success: true, data: { users, totalUsers, lastMonthsUsers } });
+  } catch (e) {
+    console.log(e);
+    next(e.message);
+  }
+};
 
 const register = async (req, res, next) => {
   const { username, email, password } = req.body;
@@ -19,25 +56,29 @@ const register = async (req, res, next) => {
 
     // Another way to create a collection
     const user = await UserModel.registerStatics(username, email, password);
-    const token = createJsonWebToken(user._id);
+    console.log("user", user);
+    const token = await createJsonWebToken(user._id, user.isAdmin);
 
     // We don't want to send the password to user so
     const { password: hashedPassword, ...rest } = user._doc;
 
+    console.log(token);
+
     // adding expiry date for token, we need to sign in every time we request for anything
     // api, so we use expires feautres to use that same token for certain time
-    const expiryDate = new Date(Date.now() + 360000); // for 1 hour
+    const expiryDate = new Date(Date.now() + 36000000); // for 1 hour
     // return res.status(200).json(user);
-    res
+    return res
       .cookie("token", token, {
         // httpOnly: true, // client won't be accesss the sent cookie
         // when does it expires, it denotes that, alternate property is maxAge
         secure: false,
+        httpOnly: true,
         expires:
           expiryDate /* there are other too like signed, secure, overwrite etc*/,
       })
       .status(200)
-      .json(rest);
+      .json({ success: true, data: rest });
   } catch (error) {
     console.log("error", error);
     next(error);
@@ -48,12 +89,17 @@ const login = async (req, res, next) => {
   const { email, password } = req.body;
   try {
     const user = await UserModel.loginStatics(email, password);
-    const token = createJsonWebToken(user._id);
+    const token = createJsonWebToken(user._id, user.isAdmin);
+
     const { password: hashedPassword, ...rest } = user._doc;
     return res
-      .cookie("token", token, { httpOnly: true, secure: false })
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: false,
+        expires: new Date(Date.now() + 36000000),
+      })
       .status(200)
-      .json(rest);
+      .json({ success: true, data: rest });
   } catch (error) {
     console.log("error", error);
     next(error);
@@ -70,14 +116,16 @@ const google = async (req, res, next) => {
     const userAlreadyExist = await UserModel.findOne({ email });
 
     if (userAlreadyExist) {
-      const token = createJsonWebToken(userAlreadyExist._id);
+      const token = await createJsonWebToken(userAlreadyExist._id);
+      console.log("token above", token);
       // User already exists, return the user data directly
       res
-        .status(200)
+        .status(201)
         .cookie("token", token, {
-          // httpOnly: true, // client won't be accesss the sent cookie
+          // httpOnly: true, // client won't accesss the sent cookie
           // when does it expires, it denotes that, alternate property is maxAge
-          secure: false,
+          // secure: false,
+          // httpOnly: true,
           expires:
             expiryDate /* there are other too like signed, secure, overwrite etc*/,
         })
@@ -104,14 +152,16 @@ const google = async (req, res, next) => {
 
       await newUser.save();
 
-      const token = createJsonWebToken(newUser._id);
+      const token = await createJsonWebToken(newUser._id, newUser.isAdmin);
+      console.log("token below", token);
 
       res
         .status(201)
         .cookie("token", token, {
           // httpOnly: true, // client won't be accesss the sent cookie
           // when does it expires, it denotes that, alternate property is maxAge
-          secure: false,
+          // secure: false,
+          httpOnly: true,
           expires:
             expiryDate /* there are other too like signed, secure, overwrite etc*/,
         })
@@ -275,4 +325,12 @@ const deleteUser = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login, google, updateProfile, deleteUser, logout };
+module.exports = {
+  getUsers,
+  register,
+  login,
+  google,
+  updateProfile,
+  deleteUser,
+  logout,
+};

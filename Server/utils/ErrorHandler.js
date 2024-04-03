@@ -5,4 +5,4 @@ const ErrorHandler = async (status, message) => {
   return error;
 };
 
-export default ErrorHandler;
+module.exports = ErrorHandler;

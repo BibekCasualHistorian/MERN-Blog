@@ -2,6 +2,17 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
 
+const path = require("path");
+
+let defaultImage = path.join(
+  __dirname,
+  "..",
+  "..",
+  "uploads",
+  "posts",
+  "r3.png"
+);
+
 const userSchema = new mongoose.Schema(
   {
     username: {
@@ -27,8 +38,11 @@ const userSchema = new mongoose.Schema(
     },
     photo: {
       type: String,
-      default:
-        "https://th.bing.com/th/id/OIP.tmgWGdzGFmIwg1iaqCbSvgHaHa?w=179&h=194&c=7&r=0&o=5&pid=1.7",
+      default: defaultImage,
+    },
+    isAdmin: {
+      type: Boolean,
+      default: true,
     },
   },
   {

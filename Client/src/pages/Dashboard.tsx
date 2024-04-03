@@ -1,6 +1,5 @@
-import { useLocation } from "react-router-dom";
-import DashboardSidebar from "../components/DashboardSidebar";
-import DashboardProfile from "../components/DashboardProfile";
+import { Outlet, useLocation } from "react-router-dom";
+import DashboardSidebar from "../components/Dashboard/DashboardSidebar";
 
 const Dashboard = () => {
   const location = useLocation();
@@ -17,8 +16,8 @@ const Dashboard = () => {
       <div className="items-stretch bg-gray-100 dark:bg-slate-600">
         <DashboardSidebar />
       </div>
-      <div className="col-span-4 p-2 ">
-        <DashboardProfile />
+      <div className="m-3 lg:col-span-4">
+        <Outlet />
       </div>
     </div>
   );

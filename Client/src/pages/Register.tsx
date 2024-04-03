@@ -38,13 +38,15 @@ const Register = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
+        credentials: "include",
       });
+      console.log("document", document.cookie);
       const data = await response.json();
       console.log("response", response);
       console.log("data", data);
       if (response.ok) {
-        dispatch(loginSuccess(data));
-        localStorage.setItem("user", JSON.stringify(data));
+        dispatch(loginSuccess(data.data));
+        localStorage.setItem("user", JSON.stringify(data.data));
         navigate("/");
       } else {
         throw Error(data.message);
@@ -54,6 +56,7 @@ const Register = () => {
       dispatch(loginFailure(error.message));
     }
   };
+
   return (
     <div className="text-center rounded-2xl max-w-[500px] m-auto border-black border-2 p-6">
       <h1 className="font-bold text-4xl ">New to this site ?</h1>
