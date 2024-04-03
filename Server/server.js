@@ -31,9 +31,13 @@ app.use(
 
 // Importing Routes
 const userRoutes = require("./routes/userRoutes");
+const postRoutes = require("./routes/postRoutes");
+const commentRoutes = require("./routes/commentRoutes");
 
 // App Routes
 app.use("/api/user", userRoutes);
+app.use("/api/post", postRoutes);
+app.use("/api/comments", commentRoutes);
 
 // final if we have error
 app.use((err, req, res, next) => {

@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 // use body parser
 
 const requireAuth = (req, res, next) => {
+  console.log("cokkie", req.cookies);
   // getting token from client
   const token = req.cookies.token;
   console.log("token in require Auth", token);
@@ -13,15 +14,17 @@ const requireAuth = (req, res, next) => {
   }
 
   // verify the jwt token we got from client
-  jwt.verify(token, process.env.SECRET, (err, decoded) => {
+  jwt.verify(token, process.env.JSONWEBTOKEN_SECRET, (err, decoded) => {
     if (err) {
+      console.log("token not verified");
       return res.status(401).json({ error: "Token verification failed" });
     }
 
+    console.log("token verified");
     // appending everything to req.user to check further, the decoded mostly           have _id as we have put that in jwt.sign() when we sent that to user. we         get that _id, as we want to update the specific user profile or delete, we       send the id in params and we check that id with jwt decoded id
     req.user = decoded;
     next();
   });
 };
 
-module.exports = { requireAuth };
+module.exports = requireAuth;
